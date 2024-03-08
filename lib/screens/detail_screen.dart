@@ -1,14 +1,57 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:pilem/models/movie.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class DetailScreen extends StatelessWidget {
+class DetailScreen extends StatefulWidget {
   final Movie movie;
   const DetailScreen({super.key, required this.movie});
+
+  @override
+  State<DetailScreen> createState() => _DetailScreenState();
+}
+
+class _DetailScreenState extends State<DetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkIsFavorite();
+  }
+
+  Future<void> _checkIsFavorite() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isFavorite = prefs.containsKey('movie_$(widget.movie.id)');
+    });
+  }
+
+  Future<void>_toogleFavorite() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isFavorite = !_isFavorite;
+    });
+
+    if(_isFavorite){
+      final String movieJson = JsonEncode(widget.movie.toJson());
+      prefs.getString('movie_$(widget.movie.id)', movieJson);
+
+      List<String> favoriteMovieIds = prefs.getStringList('favoriteMovies') ?? [];
+      favoriteMovieIds.add(widget.movie.id.toString());
+      prefs.getStringList('favoriteMovies', favoriteMovieIds);
+    } else{
+      prefs.remove('movie_$(widget.movie.id)');
+      List<String> favoriteMovieIds = prefs.getStringList('favoriteMovies') ?? [];
+      favoriteMovieIds.add(widget.movie.id.toString());
+      prefs.getStringList('favoriteMovies', favoriteMovieIds);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(movie.title),
+        title: Text(widget.movie.title),
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -17,7 +60,9 @@ class DetailScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Image.network(
-                'https://image.tmdb.org/t/p/w500${movie.backdropPath}',
+                widget.movie.backdropPath != ''
+                    ? 'https://image.tmdb.org/t/p/w500${widget.movie.backdropPath}'
+                    : 'https://via.placeholder.com/500?text=No+Image',
                 height: 300,
                 width: double.infinity,
                 fit: BoxFit.cover,
@@ -28,7 +73,7 @@ class DetailScreen extends StatelessWidget {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
-              Text(movie.overview),
+              Text(widget.movie.overview),
               const SizedBox(height: 20),
               Row(
                 children: [
@@ -42,7 +87,7 @@ class DetailScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(width: 10),
-                  Text(movie.releaseDate),
+                  Text(widget.movie.releaseDate),
                 ],
               ),
               const SizedBox(height: 20),
@@ -58,7 +103,7 @@ class DetailScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(width: 10),
-                  Text(movie.voteAverage.toString()),
+                  Text(widget.movie.voteAverage.toString()),
                 ],
               ),
             ],

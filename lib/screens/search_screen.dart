@@ -90,7 +90,9 @@ class _SearchScreenState extends State<SearchScreen> {
                 final Movie movie = _searchResults[index];
                 ListTile(
                   leading: Image.network(
-                    '',
+                    movie.posterPath != '' ?
+                    'https://image/tmdb.org/t/p/w500${movie.posterPath}' :
+                    'https://via.placeholder.com/50x75?text=No+Image',
                     height: 50,
                     width: 50,
                     fit: BoxFit.cover,
